@@ -1,0 +1,636 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USERS & AUTHENTICATION
+// ==========================================
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String?  @unique
+  phone           String?  @unique
+  firstName       String
+  lastName        String
+  passwordHash    String?  @map("password_hash")
+  role            UserRole @default(CUSTOMER)
+  isPhoneVerified Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  locale          String   @default("ru")
+  characterId     Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  character     Character?     @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  sessions      UserSession[]
+  oauthAccounts OAuthAccount[]
+  phoneVerifications PhoneVerification[]
+  bookings      Booking[]
+  payments      Payment[]
+  refunds       Refund[]
+  receipts      Receipt[]
+  gamingSessions GamingSession[]
+  purchases     CharacterPurchase[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  MANAGER
+  ADMIN
+}
+
+model UserSession {
+  id         String   @id
+  userId     Int
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+  @@index([userId])
+}
+
+model OAuthAccount {
+  id           String   @id
+  provider     String
+  providerId   String   @map("provider_id")
+  userId       Int
+  accessToken  String?  @map("access_token")
+  refreshToken String?  @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
+}
+
+model PhoneVerification {
+  id         String   @id
+  phone      String
+  code       String
+  attempts   Int      @default(0)
+  isUsed     Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([phone])
+  @@index([code])
+  @@map("phone_verifications")
+}
+
+// ==========================================
+// CHARACTERS (GAME CHARACTERS)
+// ==========================================
+
+model Character {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String
+  imageUrl    String?   @map("image_url")
+  price       Int       // in KGS (cents)
+  isFree      Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userCharacters UserCharacter[]
+  purchases      CharacterPurchase[]
+
+  @@index([isFree])
+  @@index([isActive])
+  @@map("characters")
+}
+
+model UserCharacter {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  characterId Int
+  isMain      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  @@index([userId])
+  @@map("user_characters")
+}
+
+model CharacterPurchase {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  characterId Int
+  amount      Int       // in KGS
+  paymentId   Int?
+  status      PurchaseStatus @default(PENDING)
+  transactionId String?  @map("transaction_id")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  payment   Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([characterId])
+  @@index([status])
+  @@map("character_purchases")
+}
+
+enum PurchaseStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// ==========================================
+// COMPUTER CLUB - CATEGORIES & COMPUTERS
+// ==========================================
+
+model ComputerCategory {
+  id          Int       @id @default(autoincrement())
+  name        String
+  nameKy      String?   @map("name_ky")
+  nameEn      String?   @map("name_en")
+  description String?   @map("description")
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  computers Computer[]
+  tariffs   Tariff[]
+
+  @@index([sortOrder])
+  @@map("computer_categories")
+}
+
+model Computer {
+  id           Int            @id @default(autoincrement())
+  number       Int            @unique
+  categoryId   Int
+  specifications String?      @map("specifications")
+  equipment    String?        @map("equipment")
+  imageUrl     String?        @map("image_url")
+  status       ComputerStatus @default(AVAILABLE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  category   ComputerCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+  gamingSessions GamingSession[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([number])
+  @@map("computers")
+}
+
+enum ComputerStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+// ==========================================
+// PRICING & TARIFFS
+// ==========================================
+
+model Tariff {
+  id          Int       @id @default(autoincrement())
+  name        String
+  nameKy      String?   @map("name_ky")
+  nameEn      String?   @map("name_en")
+  description String?   @map("description")
+  durationMinutes Int   @map("duration_minutes") // in minutes
+  price       Int       // in KGS (cents)
+  categoryId  Int
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  category ComputerCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([categoryId, isActive])
+  @@index([isActive])
+  @@map("tariffs")
+}
+
+// ==========================================
+// BOOKINGS
+// ==========================================
+
+model Booking {
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  computerId      Int
+  tariffId        Int
+  startsAt        DateTime
+  endsAt          DateTime
+  totalAmount     Int             @map("total_amount") // in KGS (cents)
+  status          BookingStatus   @default(PENDING_PAYMENT)
+  paymentMethod   PaymentMethod   @default(ONLINE)
+  paymentId       Int?
+  managerId       Int?
+  isCashPayment   Boolean         @default(false)
+  notes           String?         @map("notes")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  computer    Computer    @relation(fields: [computerId], references: [id], onDelete: Cascade)
+  tariff      Tariff      @relation(fields: [tariffId], references: [id], onDelete: Cascade)
+  payment     Payment?    @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  manager     User?       @relation("BookingManager", fields: [managerId], references: [id], onDelete: SetNull)
+  gamingSessions GamingSession[]
+  receipt     Receipt?    @relation("BookingReceipt")
+
+  @@index([userId])
+  @@index([computerId])
+  @@index([status])
+  @@index([startsAt, endsAt])
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  ONLINE
+  CASH
+}
+
+// ==========================================
+// PAYMENTS
+// ==========================================
+
+model Payment {
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  bookingId       Int?
+  amount          Int             // in KGS (cents)
+  currency        String          @default("KGS")
+  provider        PaymentProvider @default(CUSTOM)
+  providerPaymentId String?       @map("provider_payment_id")
+  status          PaymentStatus   @default(PENDING)
+  transactionId   String?         @map("transaction_id")
+  isIdempotent    Boolean         @default(false)
+  idempotencyKey  String?         @unique @map("idempotency_key")
+  providerRef     String?         @map("provider_ref")
+  webhookReceived Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking   Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  refunds   Refund[]
+  receipts  Receipt[]
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([status])
+  @@index([providerPaymentId])
+  @@map("payments")
+}
+
+enum PaymentProvider {
+  CUSTOM
+  E_PAY_KG
+  PAYME
+  ZIP
+  CHIPCHAP
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+// ==========================================
+// REFUNDS
+// ==========================================
+
+model Refund {
+  id                  Int         @id @default(autoincrement())
+  paymentId           Int
+  amount              Int         // in KGS (cents)
+  reason              String
+  refundedBy          Int         @map("refunded_by")
+  status              RefundStatus @default(PENDING)
+  providerRefundId    String?     @map("provider_refund_id")
+  isCashRefund        Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  payment   Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  refundedByUser User @relation("RefundManager", fields: [refundedBy], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([status])
+  @@map("refunds")
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+// ==========================================
+// RECEIPTS (ELECTRONIC RECEIPTS)
+// ==========================================
+
+model Receipt {
+  id          Int        @id @default(autoincrement())
+  bookingId   Int        @unique
+  receiptNumber String     @unique @map("receipt_number")
+  qrToken     String     @unique
+  qrUrl       String?    @map("qr_url")
+  amount      Int        // in KGS
+  status      ReceiptStatus @default(VALID)
+  isRefunded  Boolean    @default(false)
+  refundedAt  DateTime?  @map("refunded_at")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  booking Booking @relation("BookingReceipt", fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+enum ReceiptStatus {
+  VALID
+  EXPIRED
+  REFUNDED
+}
+
+// ==========================================
+// GAMING SESSIONS
+// ==========================================
+
+model GamingSession {
+  id           Int        @id @default(autoincrement())
+  bookingId    Int
+  computerId   Int
+  startedAt    DateTime
+  endedAt      DateTime?
+  status       SessionStatus @default(ACTIVE)
+  startedBy    Int        @map("started_by")
+  endedBy      Int?       @map("ended_by")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  booking    Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  computer   Computer  @relation(fields: [computerId], references: [id], onDelete: Cascade)
+  startedByUser User @relation("SessionManager", fields: [startedBy], references: [id], onDelete: Cascade)
+  endedByUser User? @relation("SessionEndManager", fields: [endedBy], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([computerId])
+  @@index([status])
+  @@map("gaming_sessions")
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+// ==========================================
+// CMS (CONTENT MANAGEMENT SYSTEM)
+// ==========================================
+
+model CMSBlock {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  title       String
+  titleKy     String?   @map("title_ky")
+  titleEn     String?   @map("title_en")
+  type        BlockType @default(TEXT)
+  content     String?   @db.Text
+  contentKy   String?   @map("content_ky") @db.Text
+  contentEn   String?   @map("content_en") @db.Text
+  imageUrl    String?   @map("image_url")
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  cards CMSCard[]
+
+  @@index([key])
+  @@index([isActive])
+  @@map("cms_blocks")
+}
+
+enum BlockType {
+  TEXT
+  CAROUSEL
+  FEATURES
+  PRICING
+  TESTIMONIALS
+  CTA
+}
+
+model CMSCard {
+  id          Int       @id @default(autoincrement())
+  blockId     Int
+  title       String
+  titleKy     String?   @map("title_ky")
+  titleEn     String?   @map("title_en")
+  description String?   @map("description")
+  descriptionKy String? @map("description_ky")
+  descriptionEn String? @map("description_en")
+  imageUrl    String?   @map("image_url")
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  block CMSBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([blockId])
+  @@index([isActive])
+  @@map("cms_cards")
+}
+
+model Quote {
+  id          Int       @id @default(autoincrement())
+  text        String
+  textKy      String?   @map("text_ky")
+  textEn      String?   @map("text_en")
+  author      String?   @map("author")
+  authorKy    String?   @map("author_ky")
+  authorEn    String?   @map("author_en")
+  imageUrl    String?   @map("image_url")
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@map("quotes")
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  title       String
+  titleKy     String?   @map("title_ky")
+  titleEn     String?   @map("title_en")
+  message     String    @db.Text
+  messageKy   String?   @map("message_ky") @db.Text
+  messageEn   String?   @map("message_en") @db.Text
+  type        NotificationType @default(OTHER)
+  isRead      Boolean   @default(false)
+  readAt      DateTime? @map("read_at")
+  link        String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  SESSION_STARTED
+  SESSION_ENDED
+  REFUND_PROCESSED
+  CHARACTER_PURCHASED
+  OTHER
+}
+
+// ==========================================
+// AI CONVERSATIONS
+// ==========================================
+
+model AIConversation {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  title       String?
+  titleKy     String?    @map("title_ky")
+  titleEn     String?    @map("title_en")
+  lastMessageAt DateTime @map("last_message_at")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  AIMessage[]
+
+  @@index([userId])
+  @@index([lastMessageAt])
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id            Int        @id @default(autoincrement())
+  conversationId Int        @map("conversation_id")
+  role          MessageRole
+  content       String     @db.Text
+  contentKy     String?    @map("content_ky") @db.Text
+  contentEn     String?    @map("content_en") @db.Text
+  createdAt     DateTime   @default(now())
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+// ==========================================
+// AUDIT LOGS
+// ==========================================
+
+model AuditLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int?
+  action      String
+  actionKy    String?   @map("action_ky")
+  actionEn    String?   @map("action_en")
+  entityType  String    @map("entity_type")
+  entityId    Int?
+  details     String?   @db.Text
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent")
+  createdAt   DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==========================================
+// SYSTEM
+// ==========================================
+
+model SystemSetting {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  value       String?   @db.Text
+  isSecret    Boolean   @default(false)
+  description String?   @map("description")
+  updatedAt   DateTime  @updatedAt
+
+  @@map("system_settings")
+}
+
+model IdempotencyKey {
+  id          Int        @id @default(autoincrement())
+  key         String     @unique
+  userId      Int?
+  action      String
+  payloadHash String     @map("payload_hash")
+  result      String?    @db.Text
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+
+  @@index([key])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
