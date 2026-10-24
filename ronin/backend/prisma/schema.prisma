@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ==========================================
@@ -12,84 +12,21 @@ datasource db {
 // ==========================================
 
 model User {
-  id              Int      @id @default(autoincrement())
-  email           String?  @unique
-  phone           String?  @unique
-  firstName       String
-  lastName        String
-  passwordHash    String?  @map("password_hash")
-  role            UserRole @default(CUSTOMER)
-  isPhoneVerified Boolean  @default(false)
-  isActive        Boolean  @default(true)
-  locale          String   @default("ru")
-  characterId     Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  character     Character?     @relation(fields: [characterId], references: [id], onDelete: SetNull)
-  sessions      UserSession[]
-  oauthAccounts OAuthAccount[]
-  phoneVerifications PhoneVerification[]
-  bookings      Booking[]
-  payments      Payment[]
-  refunds       Refund[]
-  receipts      Receipt[]
-  gamingSessions GamingSession[]
-  purchases     CharacterPurchase[]
-  auditLogs     AuditLog[]
-  notifications Notification[]
+  id               Int      @id @default(autoincrement())
+  email            String?  @unique
+  phone            String?  @unique
+  firstName        String
+  lastName         String
+  passwordHash     String?  @map("password_hash")
+  role             String   @default("CUSTOMER")
+  isPhoneVerified  Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  locale           String   @default("ru")
+  characterId      Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("users")
-}
-
-enum UserRole {
-  CUSTOMER
-  MANAGER
-  ADMIN
-}
-
-model UserSession {
-  id         String   @id
-  userId     Int
-  expiresAt  DateTime
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_sessions")
-  @@index([userId])
-}
-
-model OAuthAccount {
-  id           String   @id
-  provider     String
-  providerId   String   @map("provider_id")
-  userId       Int
-  accessToken  String?  @map("access_token")
-  refreshToken String?  @map("refresh_token")
-  expiresAt    DateTime? @map("expires_at")
-  createdAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerId])
-  @@map("oauth_accounts")
-}
-
-model PhoneVerification {
-  id         String   @id
-  phone      String
-  code       String
-  attempts   Int      @default(0)
-  isUsed     Boolean  @default(false)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-
-  @@index([phone])
-  @@index([code])
-  @@map("phone_verifications")
 }
 
 // ==========================================
@@ -108,54 +45,7 @@ model Character {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  userCharacters UserCharacter[]
-  purchases      CharacterPurchase[]
-
-  @@index([isFree])
-  @@index([isActive])
   @@map("characters")
-}
-
-model UserCharacter {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  characterId Int
-  isMain      Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, characterId])
-  @@index([userId])
-  @@map("user_characters")
-}
-
-model CharacterPurchase {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  characterId Int
-  amount      Int       // in KGS
-  paymentId   Int?
-  status      PurchaseStatus @default(PENDING)
-  transactionId String?  @map("transaction_id")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  payment   Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([characterId])
-  @@index([status])
-  @@map("character_purchases")
-}
-
-enum PurchaseStatus {
-  PENDING
-  CONFIRMED
-  FAILED
 }
 
 // ==========================================
@@ -172,10 +62,6 @@ model ComputerCategory {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  computers Computer[]
-  tariffs   Tariff[]
-
-  @@index([sortOrder])
   @@map("computer_categories")
 }
 
@@ -186,13 +72,9 @@ model Computer {
   specifications String?      @map("specifications")
   equipment    String?        @map("equipment")
   imageUrl     String?        @map("image_url")
-  status       ComputerStatus @default(AVAILABLE)
+  status       String         @default("AVAILABLE")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
-
-  category   ComputerCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  bookings   Booking[]
-  gamingSessions GamingSession[]
 
   @@index([categoryId])
   @@index([status])
@@ -200,32 +82,23 @@ model Computer {
   @@map("computers")
 }
 
-enum ComputerStatus {
-  AVAILABLE
-  IN_USE
-  MAINTENANCE
-}
-
 // ==========================================
 // PRICING & TARIFFS
 // ==========================================
 
 model Tariff {
-  id          Int       @id @default(autoincrement())
-  name        String
-  nameKy      String?   @map("name_ky")
-  nameEn      String?   @map("name_en")
-  description String?   @map("description")
-  durationMinutes Int   @map("duration_minutes") // in minutes
-  price       Int       // in KGS (cents)
-  categoryId  Int
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  category ComputerCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  id              Int       @id @default(autoincrement())
+  name            String
+  nameKy          String?   @map("name_ky")
+  nameEn          String?   @map("name_en")
+  description     String?   @map("description")
+  durationMinutes Int       @map("duration_minutes")
+  price           Int       // in KGS (cents)
+  categoryId      Int
+  isActive        Boolean   @default(true)
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([categoryId, isActive])
   @@index([isActive])
@@ -243,23 +116,15 @@ model Booking {
   tariffId        Int
   startsAt        DateTime
   endsAt          DateTime
-  totalAmount     Int             @map("total_amount") // in KGS (cents)
-  status          BookingStatus   @default(PENDING_PAYMENT)
-  paymentMethod   PaymentMethod   @default(ONLINE)
+  totalAmount     Int             @map("total_amount")
+  status          String          @default("PENDING_PAYMENT")
+  paymentMethod   String          @default("ONLINE")
   paymentId       Int?
   managerId       Int?
   isCashPayment   Boolean         @default(false)
   notes           String?         @map("notes")
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  computer    Computer    @relation(fields: [computerId], references: [id], onDelete: Cascade)
-  tariff      Tariff      @relation(fields: [tariffId], references: [id], onDelete: Cascade)
-  payment     Payment?    @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  manager     User?       @relation("BookingManager", fields: [managerId], references: [id], onDelete: SetNull)
-  gamingSessions GamingSession[]
-  receipt     Receipt?    @relation("BookingReceipt")
 
   @@index([userId])
   @@index([computerId])
@@ -268,45 +133,26 @@ model Booking {
   @@map("bookings")
 }
 
-enum BookingStatus {
-  PENDING_PAYMENT
-  CONFIRMED
-  ACTIVE
-  COMPLETED
-  CANCELLED
-  EXPIRED
-}
-
-enum PaymentMethod {
-  ONLINE
-  CASH
-}
-
 // ==========================================
 // PAYMENTS
 // ==========================================
 
 model Payment {
-  id              Int             @id @default(autoincrement())
-  userId          Int
-  bookingId       Int?
-  amount          Int             // in KGS (cents)
-  currency        String          @default("KGS")
-  provider        PaymentProvider @default(CUSTOM)
-  providerPaymentId String?       @map("provider_payment_id")
-  status          PaymentStatus   @default(PENDING)
-  transactionId   String?         @map("transaction_id")
-  isIdempotent    Boolean         @default(false)
-  idempotencyKey  String?         @unique @map("idempotency_key")
-  providerRef     String?         @map("provider_ref")
-  webhookReceived Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  booking   Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  refunds   Refund[]
-  receipts  Receipt[]
+  id                Int             @id @default(autoincrement())
+  userId            Int
+  bookingId         Int?
+  amount            Int             // in KGS (cents)
+  currency          String          @default("KGS")
+  provider          String          @default("CUSTOM")
+  providerPaymentId String?         @map("provider_payment_id")
+  status            String          @default("PENDING")
+  transactionId     String?         @map("transaction_id")
+  isIdempotent      Boolean         @default(false)
+  idempotencyKey    String?         @unique @map("idempotency_key")
+  providerRef       String?         @map("provider_ref")
+  webhookReceived   Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([userId])
   @@index([bookingId])
@@ -315,51 +161,25 @@ model Payment {
   @@map("payments")
 }
 
-enum PaymentProvider {
-  CUSTOM
-  E_PAY_KG
-  PAYME
-  ZIP
-  CHIPCHAP
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCEEDED
-  FAILED
-  REFUND_PENDING
-  PARTIALLY_REFUNDED
-  REFUNDED
-}
-
 // ==========================================
 // REFUNDS
 // ==========================================
 
 model Refund {
-  id                  Int         @id @default(autoincrement())
-  paymentId           Int
-  amount              Int         // in KGS (cents)
-  reason              String
-  refundedBy          Int         @map("refunded_by")
-  status              RefundStatus @default(PENDING)
-  providerRefundId    String?     @map("provider_refund_id")
-  isCashRefund        Boolean     @default(false)
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-
-  payment   Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  refundedByUser User @relation("RefundManager", fields: [refundedBy], references: [id], onDelete: Cascade)
+  id               Int          @id @default(autoincrement())
+  paymentId        Int
+  amount           Int          // in KGS (cents)
+  reason           String
+  refundedBy       Int          @map("refunded_by")
+  status           String       @default("PENDING")
+  providerRefundId String?      @map("provider_refund_id")
+  isCashRefund     Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([paymentId])
   @@index([status])
   @@map("refunds")
-}
-
-enum RefundStatus {
-  PENDING
-  SUCCEEDED
-  FAILED
 }
 
 // ==========================================
@@ -367,27 +187,19 @@ enum RefundStatus {
 // ==========================================
 
 model Receipt {
-  id          Int        @id @default(autoincrement())
-  bookingId   Int        @unique
-  receiptNumber String     @unique @map("receipt_number")
-  qrToken     String     @unique
-  qrUrl       String?    @map("qr_url")
-  amount      Int        // in KGS
-  status      ReceiptStatus @default(VALID)
-  isRefunded  Boolean    @default(false)
-  refundedAt  DateTime?  @map("refunded_at")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  booking Booking @relation("BookingReceipt", fields: [bookingId], references: [id], onDelete: Cascade)
+  id            Int          @id @default(autoincrement())
+  bookingId     Int          @unique
+  receiptNumber String       @unique @map("receipt_number")
+  qrToken       String       @unique
+  qrUrl         String?      @map("qr_url")
+  amount        Int          // in KGS
+  status        String       @default("VALID")
+  isRefunded    Boolean      @default(false)
+  refundedAt    DateTime?    @map("refunded_at")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@map("receipts")
-}
-
-enum ReceiptStatus {
-  VALID
-  EXPIRED
-  REFUNDED
 }
 
 // ==========================================
@@ -395,32 +207,21 @@ enum ReceiptStatus {
 // ==========================================
 
 model GamingSession {
-  id           Int        @id @default(autoincrement())
-  bookingId    Int
-  computerId   Int
-  startedAt    DateTime
-  endedAt      DateTime?
-  status       SessionStatus @default(ACTIVE)
-  startedBy    Int        @map("started_by")
-  endedBy      Int?       @map("ended_by")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  booking    Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  computer   Computer  @relation(fields: [computerId], references: [id], onDelete: Cascade)
-  startedByUser User @relation("SessionManager", fields: [startedBy], references: [id], onDelete: Cascade)
-  endedByUser User? @relation("SessionEndManager", fields: [endedBy], references: [id], onDelete: SetNull)
+  id          Int           @id @default(autoincrement())
+  bookingId   Int
+  computerId  Int
+  startedAt   DateTime
+  endedAt     DateTime?
+  status      String        @default("ACTIVE")
+  startedBy   Int           @map("started_by")
+  endedBy     Int?          @map("ended_by")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([bookingId])
   @@index([computerId])
   @@index([status])
   @@map("gaming_sessions")
-}
-
-enum SessionStatus {
-  ACTIVE
-  COMPLETED
-  TERMINATED
 }
 
 // ==========================================
@@ -433,48 +234,35 @@ model CMSBlock {
   title       String
   titleKy     String?   @map("title_ky")
   titleEn     String?   @map("title_en")
-  type        BlockType @default(TEXT)
-  content     String?   @db.Text
-  contentKy   String?   @map("content_ky") @db.Text
-  contentEn   String?   @map("content_en") @db.Text
+  type        String    @default("TEXT")
+  content     String?
+  contentKy   String?   @map("content_ky")
+  contentEn   String?   @map("content_en")
   imageUrl    String?   @map("image_url")
   sortOrder   Int       @default(0)
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  cards CMSCard[]
 
   @@index([key])
   @@index([isActive])
   @@map("cms_blocks")
 }
 
-enum BlockType {
-  TEXT
-  CAROUSEL
-  FEATURES
-  PRICING
-  TESTIMONIALS
-  CTA
-}
-
 model CMSCard {
-  id          Int       @id @default(autoincrement())
-  blockId     Int
-  title       String
-  titleKy     String?   @map("title_ky")
-  titleEn     String?   @map("title_en")
-  description String?   @map("description")
-  descriptionKy String? @map("description_ky")
-  descriptionEn String? @map("description_en")
-  imageUrl    String?   @map("image_url")
-  sortOrder   Int       @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  block CMSBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  id            Int       @id @default(autoincrement())
+  blockId       Int
+  title         String
+  titleKy       String?   @map("title_ky")
+  titleEn       String?   @map("title_en")
+  description   String?   @map("description")
+  descriptionKy String?   @map("description_ky")
+  descriptionEn String?   @map("description_en")
+  imageUrl      String?   @map("image_url")
+  sortOrder     Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([blockId])
   @@index([isActive])
@@ -504,37 +292,23 @@ model Quote {
 // ==========================================
 
 model Notification {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   userId      Int
   title       String
-  titleKy     String?   @map("title_ky")
-  titleEn     String?   @map("title_en")
-  message     String    @db.Text
-  messageKy   String?   @map("message_ky") @db.Text
-  messageEn   String?   @map("message_en") @db.Text
-  type        NotificationType @default(OTHER)
-  isRead      Boolean   @default(false)
-  readAt      DateTime? @map("read_at")
-  link        String?   @db.Text
-  createdAt   DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleKy     String?     @map("title_ky")
+  titleEn     String?     @map("title_en")
+  message     String
+  messageKy   String?     @map("message_ky")
+  messageEn   String?     @map("message_en")
+  type        String      @default("OTHER")
+  isRead      Boolean     @default(false)
+  readAt      DateTime?   @map("read_at")
+  link        String?
+  createdAt   DateTime    @default(now())
 
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
-}
-
-enum NotificationType {
-  BOOKING_CONFIRMED
-  BOOKING_CANCELLED
-  PAYMENT_SUCCESS
-  PAYMENT_FAILED
-  SESSION_STARTED
-  SESSION_ENDED
-  REFUND_PROCESSED
-  CHARACTER_PURCHASED
-  OTHER
 }
 
 // ==========================================
@@ -542,17 +316,14 @@ enum NotificationType {
 // ==========================================
 
 model AIConversation {
-  id          Int        @id @default(autoincrement())
-  userId      Int
-  title       String?
-  titleKy     String?    @map("title_ky")
-  titleEn     String?    @map("title_en")
-  lastMessageAt DateTime @map("last_message_at")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  AIMessage[]
+  id              DateTime @id @default(now())
+  userId          Int
+  title           String?
+  titleKy         String?    @map("title_ky")
+  titleEn         String?    @map("title_en")
+  lastMessageAt   DateTime   @map("last_message_at")
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([userId])
   @@index([lastMessageAt])
@@ -560,24 +331,17 @@ model AIConversation {
 }
 
 model AIMessage {
-  id            Int        @id @default(autoincrement())
-  conversationId Int        @map("conversation_id")
-  role          MessageRole
-  content       String     @db.Text
-  contentKy     String?    @map("content_ky") @db.Text
-  contentEn     String?    @map("content_en") @db.Text
-  createdAt     DateTime   @default(now())
-
-  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  id             Int        @id @default(autoincrement())
+  conversationId Int
+  role           String
+  content        String
+  contentKy      String?    @map("content_ky")
+  contentEn      String?    @map("content_en")
+  createdAt      DateTime   @default(now())
 
   @@index([conversationId])
   @@index([createdAt])
   @@map("ai_messages")
-}
-
-enum MessageRole {
-  USER
-  ASSISTANT
 }
 
 // ==========================================
@@ -592,12 +356,10 @@ model AuditLog {
   actionEn    String?   @map("action_en")
   entityType  String    @map("entity_type")
   entityId    Int?
-  details     String?   @db.Text
+  details     String?
   ipAddress   String?   @map("ip_address")
   userAgent   String?   @map("user_agent")
   createdAt   DateTime  @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([entityType, entityId])
@@ -612,7 +374,7 @@ model AuditLog {
 model SystemSetting {
   id          Int       @id @default(autoincrement())
   key         String    @unique
-  value       String?   @db.Text
+  value       String?
   isSecret    Boolean   @default(false)
   description String?   @map("description")
   updatedAt   DateTime  @updatedAt
@@ -626,7 +388,7 @@ model IdempotencyKey {
   userId      Int?
   action      String
   payloadHash String     @map("payload_hash")
-  result      String?    @db.Text
+  result      String?
   expiresAt   DateTime
   createdAt   DateTime   @default(now())
 

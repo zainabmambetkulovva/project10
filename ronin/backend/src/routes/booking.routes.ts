@@ -3,7 +3,6 @@ import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { bookingService } from '../services/booking.service';
 import { receiptService } from '../services/receipt.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -12,8 +11,8 @@ router.get(
   '/user',
   authMiddleware,
   [
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   async (req, res) => {
     try {
@@ -30,7 +29,7 @@ router.get(
       res.json(bookings);
     } catch (error) {
       console.error('[USER BOOKINGS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -41,10 +40,10 @@ router.get(
   authMiddleware,
   requireManagerRole,
   [
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
-    check('status').optional().isIn(['PENDING_PAYMENT', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED']).withMessage(i18n.t('validation.invalid_status')),
-    check('search').optional().isString().withMessage(i18n.t('validation.invalid_search')),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
+    check('status').optional().isIn(['PENDING_PAYMENT', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED']),
+    check('search').optional().isString(),
   ],
   async (req, res) => {
     try {
@@ -64,7 +63,7 @@ router.get(
       res.json(bookings);
     } catch (error) {
       console.error('[MANAGER BOOKINGS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -74,7 +73,7 @@ router.get(
   '/stats',
   authMiddleware,
   requireManagerRole,
-  [check('period').optional().isIn(['today', 'week', 'month']).withMessage(i18n.t('validation.invalid_period'))],
+  [check('period').optional().isIn(['today', 'week', 'month'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -89,7 +88,7 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -105,7 +104,7 @@ router.get(
       res.json(bookings);
     } catch (error) {
       console.error('[ACTIVE BOOKINGS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -115,13 +114,13 @@ router.post(
   '/',
   authMiddleware,
   [
-    body('computerId').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('tariffId').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('startsAt').isISO8601().withMessage(i18n.t('validation.invalid_date')),
-    body('endsAt').isISO8601().withMessage(i18n.t('validation.invalid_date')),
-    body('paymentMethod').isIn(['ONLINE', 'CASH']).withMessage(i18n.t('validation.invalid_payment_method')),
-    body('managerId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('notes').optional().isString().withMessage(i18n.t('validation.invalid_notes')),
+    body('computerId').isInt(),
+    body('tariffId').isInt(),
+    body('startsAt').isISO8601(),
+    body('endsAt').isISO8601(),
+    body('paymentMethod').isIn(['ONLINE', 'CASH']),
+    body('managerId').optional().isInt(),
+    body('notes').optional().isString(),
   ],
   async (req, res) => {
     try {
@@ -147,22 +146,22 @@ router.post(
       res.status(201).json(booking);
     } catch (error) {
       console.error('[CREATE BOOKING ERROR]', error);
-      if (error.message === i18n.t('errors.computer_maintenance')) {
+      if (error.message === 'Computer under maintenance') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.computer_unavailable')) {
+      if (error.message === 'Computer unavailable') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.tariff_not_found')) {
+      if (error.message === 'Tariff not found') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.tariff_inactive')) {
+      if (error.message === 'Tariff inactive') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.tariff_category_mismatch')) {
+      if (error.message === 'Tariff category mismatch') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -172,7 +171,7 @@ router.post(
   '/:id/confirm-payment',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -188,13 +187,13 @@ router.post(
       res.json(booking);
     } catch (error) {
       console.error('[CONFIRM PAYMENT ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.booking_not_pending')) {
+      if (error.message === 'Booking not pending') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -203,7 +202,7 @@ router.post(
 router.post(
   '/:id/cancel',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -217,16 +216,16 @@ router.post(
       res.json(booking);
     } catch (error) {
       console.error('[CANCEL BOOKING ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.forbidden')) {
+      if (error.message === 'Forbidden') {
         return res.status(403).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.cannot_cancel')) {
+      if (error.message === 'Cannot cancel') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -236,7 +235,7 @@ router.patch(
   '/:id/status',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id')), body('status').isIn(['PENDING_PAYMENT', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED']).withMessage(i18n.t('validation.invalid_status'))],
+  [param('id').isInt(), body('status').isIn(['PENDING_PAYMENT', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -249,15 +248,23 @@ router.patch(
       res.json(booking);
     } catch (error) {
       console.error('[UPDATE STATUS ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.invalid_status_transition')) {
+      if (error.message === 'Invalid status transition') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+
+

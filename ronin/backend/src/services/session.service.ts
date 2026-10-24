@@ -49,7 +49,7 @@ export class GamingSessionService {
     });
 
     if (!session) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     return session;
@@ -65,15 +65,15 @@ export class GamingSessionService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.booking_not_found'));
+      throw new Error(i18n('errors.booking_not_found'));
     }
 
     if (booking.status !== 'CONFIRMED' && booking.status !== 'ACTIVE') {
-      throw new Error(i18n.t('errors.booking_not_confirmed'));
+      throw new Error(i18n('errors.booking_not_confirmed'));
     }
 
     if (booking.computerId !== computerId) {
-      throw new Error(i18n.t('errors.computer_mismatch'));
+      throw new Error(i18n('errors.computer_mismatch'));
     }
 
     // Проверяем, не запущена ли уже сессия
@@ -85,7 +85,7 @@ export class GamingSessionService {
     });
 
     if (existingSession) {
-      throw new Error(i18n.t('errors.session_already_started'));
+      throw new Error(i18n('errors.session_already_started'));
     }
 
     // Создаем сессию
@@ -131,11 +131,11 @@ export class GamingSessionService {
     });
 
     if (!session) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (session.status !== 'ACTIVE') {
-      throw new Error(i18n.t('errors.session_not_active'));
+      throw new Error(i18n('errors.session_not_active'));
     }
 
     // Завершаем сессию
@@ -277,3 +277,4 @@ export class GamingSessionService {
 }
 
 export const gamingSessionService = new GamingSessionService();
+

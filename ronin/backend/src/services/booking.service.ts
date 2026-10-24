@@ -75,7 +75,7 @@ export class BookingService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     return booking;
@@ -152,13 +152,13 @@ export class BookingService {
     const computer = await computerService.findById(data.computerId);
     
     if (computer.status === 'MAINTENANCE') {
-      throw new Error(i18n.t('errors.computer_maintenance'));
+      throw new Error(i18n('errors.computer_maintenance'));
     }
 
     // Проверяем доступность
     const isAvailable = await this.checkAvailability(data.computerId, data.startsAt, data.endsAt);
     if (!isAvailable) {
-      throw new Error(i18n.t('errors.computer_unavailable'));
+      throw new Error(i18n('errors.computer_unavailable'));
     }
 
     // Проверяем тариф
@@ -167,15 +167,15 @@ export class BookingService {
     });
 
     if (!tariff) {
-      throw new Error(i18n.t('errors.tariff_not_found'));
+      throw new Error(i18n('errors.tariff_not_found'));
     }
 
     if (!tariff.isActive) {
-      throw new Error(i18n.t('errors.tariff_inactive'));
+      throw new Error(i18n('errors.tariff_inactive'));
     }
 
     if (tariff.categoryId !== computer.categoryId) {
-      throw new Error(i18n.t('errors.tariff_category_mismatch'));
+      throw new Error(i18n('errors.tariff_category_mismatch'));
     }
 
     // Рассчитываем стоимость
@@ -216,11 +216,11 @@ export class BookingService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (booking.status !== 'PENDING_PAYMENT') {
-      throw new Error(i18n.t('errors.booking_not_pending'));
+      throw new Error(i18n('errors.booking_not_pending'));
     }
 
     const updatedBooking = await prisma.booking.update({
@@ -250,20 +250,20 @@ export class BookingService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (booking.userId !== userId && booking.managerId !== userId) {
-      throw new Error(i18n.t('errors.forbidden'));
+      throw new Error(i18n('errors.forbidden'));
     }
 
     if (booking.status !== 'PENDING_PAYMENT' && booking.status !== 'CONFIRMED') {
-      throw new Error(i18n.t('errors.cannot_cancel'));
+      throw new Error(i18n('errors.cannot_cancel'));
     }
 
     // Если есть оплата, создаем возврат
     if (booking.paymentId) {
-      await paymentService.createRefund(booking.paymentId, userId, i18n.t('refunds.booking_cancelled'));
+      await paymentService.createRefund(booking.paymentId, userId, i18n('refunds.booking_cancelled'));
     }
 
     const updatedBooking = await prisma.booking.update({
@@ -367,7 +367,7 @@ export class BookingService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     // Валидация переходов статусов
@@ -378,7 +378,7 @@ export class BookingService {
     };
 
     if (allowedTransitions[booking.status] && !allowedTransitions[booking.status].includes(status)) {
-      throw new Error(i18n.t('errors.invalid_status_transition'));
+      throw new Error(i18n('errors.invalid_status_transition'));
     }
 
     const updatedBooking = await prisma.booking.update({
@@ -437,3 +437,4 @@ export class BookingService {
 }
 
 export const bookingService = new BookingService();
+

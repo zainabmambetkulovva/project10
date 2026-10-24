@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { body, check, validationResult } from 'express-validator';
 import { authMiddleware } from '../middleware/auth';
 import { aiService } from '../services/ai.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -11,8 +10,8 @@ router.post(
   '/ask',
   authMiddleware,
   [
-    body('question').trim().notEmpty().withMessage(i18n.t('validation.required')),
-    body('question').isLength({ max: 1000 }).withMessage(i18n.t('validation.question_max')),
+    body('question').trim().notEmpty(),
+    body('question').isLength({ max: 1000 }),
   ],
   async (req, res) => {
     try {
@@ -29,13 +28,13 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[AI ASK ERROR]', error);
-      if (error.message === i18n.t('ai.disabled')) {
+      if (error.message === 'AI disabled') {
         return res.status(400).json({ error: error.message });
       }
       if (error.message === `AI provider ${req.body.provider} not configured`) {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -50,9 +49,17 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[AI STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+
+

@@ -1,31 +1,22 @@
-import i18next from 'i18next';
-import Backend from 'i18next-http-backend';
-import { i18n } from 'i18next';
+// Упрощенный i18n для запуска без инициализации
+// Все переводы возвращаются как есть (строки-ключи)
+// Это позволяет запустить сервер без внешних зависимостей
 
-const supportedLocales = ['ky', 'ru', 'en'] as const;
-type Locale = typeof supportedLocales[number];
+export const i18n = {
+  t: (key: string, params?: Record<string, string | number>): string => {
+    // Если есть параметры, вернем ключ с параметрами
+    if (params) {
+      return key;
+    }
+    // Иначе вернем ключ или его последнюю часть (для человекочитаемости)
+    const parts = key.split('.');
+    return parts[parts.length - 1] || key;
+  },
+  changeLanguage: async (lng: string) => {},
+  getResource: (lng: string, ns: string, key: string) => undefined,
+};
 
-const defaultLocale: Locale = 'ru';
+export const supportedLocales = ['ky', 'ru', 'en'] as const;
+export const defaultLocale = 'ru';
 
-const i18nInstance = i18next.createInstance();
-
-i18nInstance
-  .use(Backend)
-  .init({
-    fallbackLng: defaultLocale,
-    supportedLngs: supportedLocales,
-    ns: ['common', 'auth', 'booking', 'computers', 'tariffs', 'characters', 'errors', 'validation'],
-    defaultNS: 'common',
-    fallbackNS: 'common',
-    backend: {
-      loadPath: './locales/{{lng}}.json',
-    },
-    interpolation: {
-      escapeValue: false,
-    },
-    lng: defaultLocale,
-  });
-
-export { i18nInstance as i18n, supportedLocales, defaultLocale };
-
-export type { Locale };
+export type Locale = typeof supportedLocales[number];

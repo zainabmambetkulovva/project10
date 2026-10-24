@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_routes_1 = __importDefault(require("./auth.routes"));
+const computer_routes_1 = __importDefault(require("./computer.routes"));
+const booking_routes_1 = __importDefault(require("./booking.routes"));
+const payment_routes_1 = __importDefault(require("./payment.routes"));
+const character_routes_1 = __importDefault(require("./character.routes"));
+const receipt_routes_1 = __importDefault(require("./receipt.routes"));
+const session_routes_1 = __importDefault(require("./session.routes"));
+const cms_routes_1 = __importDefault(require("./cms.routes"));
+const ai_routes_1 = __importDefault(require("./ai.routes"));
+const router = (0, express_1.Router)();
+router.use('/auth', auth_routes_1.default);
+router.use('/computers', computer_routes_1.default);
+router.use('/bookings', booking_routes_1.default);
+router.use('/payments', payment_routes_1.default);
+router.use('/characters', character_routes_1.default);
+router.use('/receipts', receipt_routes_1.default);
+router.use('/sessions', session_routes_1.default);
+router.use('/cms', cms_routes_1.default);
+router.use('/ai', ai_routes_1.default);
+exports.default = router;

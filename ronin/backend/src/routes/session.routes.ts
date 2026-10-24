@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { gamingSessionService } from '../services/session.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -17,7 +16,7 @@ router.get(
       res.json(sessions);
     } catch (error) {
       console.error('[ACTIVE SESSIONS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -26,7 +25,7 @@ router.get(
 router.get(
   '/:id',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -39,10 +38,10 @@ router.get(
       res.json(session);
     } catch (error) {
       console.error('[GET SESSION ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -52,8 +51,8 @@ router.get(
   '/user',
   authMiddleware,
   [
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   async (req, res) => {
     try {
@@ -70,7 +69,7 @@ router.get(
       res.json(sessions);
     } catch (error) {
       console.error('[USER SESSIONS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -81,8 +80,8 @@ router.post(
   authMiddleware,
   requireManagerRole,
   [
-    body('bookingId').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('computerId').isInt().withMessage(i18n.t('validation.invalid_id')),
+    body('bookingId').isInt(),
+    body('computerId').isInt(),
   ],
   async (req, res) => {
     try {
@@ -99,19 +98,19 @@ router.post(
       res.status(201).json(session);
     } catch (error) {
       console.error('[START SESSION ERROR]', error);
-      if (error.message === i18n.t('errors.booking_not_found')) {
+      if (error.message === 'Booking not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.booking_not_confirmed')) {
+      if (error.message === 'Booking not confirmed') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.computer_mismatch')) {
+      if (error.message === 'Computer mismatch') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.session_already_started')) {
+      if (error.message === 'Session already started') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -121,7 +120,7 @@ router.post(
   '/:id/end',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -135,13 +134,13 @@ router.post(
       res.json(session);
     } catch (error) {
       console.error('[END SESSION ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.session_not_active')) {
+      if (error.message === 'Session not active') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -157,7 +156,7 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[END EXPIRED SESSIONS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -167,7 +166,7 @@ router.get(
   '/stats',
   authMiddleware,
   requireManagerRole,
-  [check('period').optional().isIn(['today', 'week', 'month']).withMessage(i18n.t('validation.invalid_period'))],
+  [check('period').optional().isIn(['today', 'week', 'month'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -182,9 +181,16 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[SESSION STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+

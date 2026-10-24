@@ -85,7 +85,7 @@ export class ComputerService {
     });
 
     if (!computer) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     return computer;
@@ -403,3 +403,4 @@ export class ComputerService {
 }
 
 export const computerService = new ComputerService();
+

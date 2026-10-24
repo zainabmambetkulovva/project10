@@ -28,7 +28,7 @@ export class CharacterService {
     });
 
     if (!character) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     return character;
@@ -92,7 +92,7 @@ export class CharacterService {
     });
 
     if (!userCharacter) {
-      throw new Error(i18n.t('errors.character_not_owned'));
+      throw new Error(i18n('errors.character_not_owned'));
     }
 
     // Сначала снимаем у всех флаг main
@@ -119,11 +119,11 @@ export class CharacterService {
     });
 
     if (!character) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (character.isFree) {
-      throw new Error(i18n.t('errors.character_free'));
+      throw new Error(i18n('errors.character_free'));
     }
 
     // Проверяем, есть ли уже у пользователя этот персонаж
@@ -132,7 +132,7 @@ export class CharacterService {
     });
 
     if (existing) {
-      throw new Error(i18n.t('errors.character_already_owned'));
+      throw new Error(i18n('errors.character_already_owned'));
     }
 
     // Проверяем, есть ли уже активная покупка
@@ -145,7 +145,7 @@ export class CharacterService {
     });
 
     if (existingPurchase) {
-      throw new Error(i18n.t('errors.purchase_pending'));
+      throw new Error(i18n('errors.purchase_pending'));
     }
 
     // Создаем запись покупки
@@ -174,7 +174,7 @@ export class CharacterService {
         },
       });
 
-      return { success: true, message: i18n.t('characters.free_selected') };
+      return { success: true, message: i18n('characters.free_selected') };
     }
 
     // Если платный, создаем платеж
@@ -185,14 +185,14 @@ export class CharacterService {
         success: true,
         purchaseId: purchase.id,
         payment,
-        message: i18n.t('characters.payment_required'),
+        message: i18n('characters.payment_required'),
       };
     }
 
     return {
       success: true,
       purchaseId: purchase.id,
-      message: i18n.t('characters.payment_required'),
+      message: i18n('characters.payment_required'),
     };
   }
 
@@ -206,11 +206,11 @@ export class CharacterService {
     });
 
     if (!purchase) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (purchase.status !== 'PENDING') {
-      throw new Error(i18n.t('errors.purchase_not_pending'));
+      throw new Error(i18n('errors.purchase_not_pending'));
     }
 
     // Если бесплатный, просто добавляем
@@ -233,7 +233,7 @@ export class CharacterService {
 
     // Проверяем, был ли платеж успешным
     if (!purchase.paymentId) {
-      throw new Error(i18n.t('errors.payment_required'));
+      throw new Error(i18n('errors.payment_required'));
     }
 
     const payment = await prisma.payment.findUnique({
@@ -241,7 +241,7 @@ export class CharacterService {
     });
 
     if (!payment || payment.status !== 'SUCCEEDED') {
-      throw new Error(i18n.t('errors.payment_not_completed'));
+      throw new Error(i18n('errors.payment_not_completed'));
     }
 
     // Создаем запись о владении персонажем
@@ -315,3 +315,4 @@ export class CharacterService {
 }
 
 export const characterService = new CharacterService();
+

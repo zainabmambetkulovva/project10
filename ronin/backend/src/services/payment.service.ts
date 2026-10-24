@@ -90,7 +90,7 @@ export class PaymentService {
       return {
         payment,
         status: 'SUCCEEDED',
-        message: i18n.t('payments.custom_success'),
+        message: i18n('payments.custom_success'),
       };
     }
 
@@ -128,7 +128,7 @@ export class PaymentService {
     return {
       payment,
       status: 'PENDING',
-      message: i18n.t('payments.pending'),
+      message: i18n('payments.pending'),
     };
   }
 
@@ -141,7 +141,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (payment.status !== 'PENDING') {
@@ -150,7 +150,7 @@ export class PaymentService {
 
     // Если custom, проверяем через webhook
     if (payment.provider === 'custom') {
-      throw new Error(i18n.t('payments.webhook_required'));
+      throw new Error(i18n('payments.webhook_required'));
     }
 
     // Если есть адаптер, проверяем через него
@@ -185,7 +185,7 @@ export class PaymentService {
     if (provider === 'custom') {
       // Для custom провайдера проверяем простую подпись
       if (!signature || signature !== config.PAYMENT_WEBHOOK_SECRET) {
-        throw new Error(i18n.t('errors.invalid_signature'));
+        throw new Error(i18n('errors.invalid_signature'));
       }
     } else {
       const adapter = this.getAdapter(provider);
@@ -206,7 +206,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new Error(i18n.t('errors.payment_not_found'));
+      throw new Error(i18n('errors.payment_not_found'));
     }
 
     // Обновляем статус
@@ -232,11 +232,11 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     if (payment.status !== 'SUCCEEDED') {
-      throw new Error(i18n.t('errors.payment_not_completed'));
+      throw new Error(i18n('errors.payment_not_completed'));
     }
 
     // Проверяем, сколько можно вернуть
@@ -244,7 +244,7 @@ export class PaymentService {
     const refundableAmount = payment.amount - refundedAmount;
 
     if (refundableAmount <= 0) {
-      throw new Error(i18n.t('errors.no_refundable_amount'));
+      throw new Error(i18n('errors.no_refundable_amount'));
     }
 
     // Создаем возврат
@@ -286,7 +286,7 @@ export class PaymentService {
       return {
         refund,
         status: 'SUCCEEDED',
-        message: i18n.t('refunds.custom_success'),
+        message: i18n('refunds.custom_success'),
       };
     }
 
@@ -323,7 +323,7 @@ export class PaymentService {
     return {
       refund,
       status: 'PENDING',
-      message: i18n.t('refunds.pending'),
+      message: i18n('refunds.pending'),
     };
   }
 
@@ -398,3 +398,4 @@ export class PaymentService {
 }
 
 export const paymentService = new PaymentService();
+

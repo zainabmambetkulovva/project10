@@ -26,7 +26,7 @@ export class TariffService {
     });
 
     if (!tariff) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     return tariff;
@@ -117,3 +117,4 @@ export class TariffService {
 }
 
 export const tariffService = new TariffService();
+

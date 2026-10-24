@@ -3,7 +3,6 @@ import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { characterService } from '../services/character.service';
 import { paymentService } from '../services/payment.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -16,7 +15,7 @@ router.get(
       res.json(characters);
     } catch (error) {
       console.error('[CHARACTERS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -30,7 +29,7 @@ router.get(
       res.json(characters);
     } catch (error) {
       console.error('[FREE CHARACTERS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -44,7 +43,7 @@ router.get(
       res.json(characters);
     } catch (error) {
       console.error('[PAID CHARACTERS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -52,7 +51,7 @@ router.get(
 // Получить персонажа по ID
 router.get(
   '/:id',
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -65,10 +64,10 @@ router.get(
       res.json(character);
     } catch (error) {
       console.error('[CHARACTER ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -84,7 +83,7 @@ router.get(
       res.json(characters);
     } catch (error) {
       console.error('[USER CHARACTERS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -93,7 +92,7 @@ router.get(
 router.post(
   '/user/main',
   authMiddleware,
-  [body('characterId').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [body('characterId').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -107,10 +106,10 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[SET MAIN CHARACTER ERROR]', error);
-      if (error.message === i18n.t('errors.character_not_owned')) {
+      if (error.message === 'Character not owned') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -119,7 +118,7 @@ router.post(
 router.post(
   '/:id/purchase',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id')), body('paymentMethod').isIn(['ONLINE', 'CASH']).withMessage(i18n.t('validation.invalid_payment_method'))],
+  [param('id').isInt(), body('paymentMethod').isIn(['ONLINE', 'CASH'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -139,19 +138,19 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[PURCHASE CHARACTER ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.character_free')) {
+      if (error.message === 'Character is free') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.character_already_owned')) {
+      if (error.message === 'Character already owned') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.purchase_pending')) {
+      if (error.message === 'Purchase pending') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -160,7 +159,7 @@ router.post(
 router.post(
   '/purchase/:id/confirm',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -173,16 +172,16 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[CONFIRM PURCHASE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.purchase_not_pending')) {
+      if (error.message === 'Purchase not pending') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.payment_required')) {
+      if (error.message === 'Payment required') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -193,13 +192,13 @@ router.post(
   authMiddleware,
   requireAdminRole,
   [
-    body('name').trim().notEmpty().withMessage(i18n.t('validation.name_required')),
-    body('description').trim().notEmpty().withMessage(i18n.t('validation.required')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('price').isInt().withMessage(i18n.t('validation.invalid_price')),
-    body('isFree').isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('isActive').isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('sortOrder').isInt().withMessage(i18n.t('validation.invalid_order')),
+    body('name').trim().notEmpty(),
+    body('description').trim().notEmpty(),
+    body('imageUrl').optional().isURL(),
+    body('price').isInt(),
+    body('isFree').isBoolean(),
+    body('isActive').isBoolean(),
+    body('sortOrder').isInt(),
   ],
   async (req, res) => {
     try {
@@ -213,7 +212,7 @@ router.post(
       res.status(201).json(character);
     } catch (error) {
       console.error('[CREATE CHARACTER ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -224,14 +223,14 @@ router.put(
   authMiddleware,
   requireAdminRole,
   [
-    param('id').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('name').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('description').optional().trim().withMessage(i18n.t('validation.required')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('price').optional().isInt().withMessage(i18n.t('validation.invalid_price')),
-    body('isFree').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('isActive').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('sortOrder').optional().isInt().withMessage(i18n.t('validation.invalid_order')),
+    param('id').isInt(),
+    body('name').optional().trim(),
+    body('description').optional().trim(),
+    body('imageUrl').optional().isURL(),
+    body('price').optional().isInt(),
+    body('isFree').optional().isBoolean(),
+    body('isActive').optional().isBoolean(),
+    body('sortOrder').optional().isInt(),
   ],
   async (req, res) => {
     try {
@@ -245,10 +244,10 @@ router.put(
       res.json(character);
     } catch (error) {
       console.error('[UPDATE CHARACTER ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -264,9 +263,16 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[CHARACTER STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+

@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { cmsService } from '../services/cms.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -15,7 +14,7 @@ router.get(
       res.json(blocks);
     } catch (error) {
       console.error('[BLOCKS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -23,7 +22,7 @@ router.get(
 // Получить блок по ключу
 router.get(
   '/block/:key',
-  [param('key').isString().withMessage(i18n.t('validation.invalid_key'))],
+  [param('key').isString()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -36,7 +35,7 @@ router.get(
       res.json(block);
     } catch (error) {
       console.error('[BLOCK BY KEY ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -50,7 +49,7 @@ router.get(
       res.json(cards);
     } catch (error) {
       console.error('[CARDS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -64,7 +63,7 @@ router.get(
       res.json(quotes);
     } catch (error) {
       console.error('[QUOTES ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -78,7 +77,7 @@ router.get(
       res.json(content);
     } catch (error) {
       console.error('[LANDING CONTENT ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -89,17 +88,17 @@ router.post(
   authMiddleware,
   requireAdminRole,
   [
-    body('key').trim().notEmpty().withMessage(i18n.t('validation.required')),
-    body('title').trim().notEmpty().withMessage(i18n.t('validation.name_required')),
-    body('titleKy').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleEn').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('type').isIn(['TEXT', 'CAROUSEL', 'FEATURES', 'PRICING', 'TESTIMONIALS', 'CTA']).withMessage(i18n.t('validation.invalid_type')),
-    body('content').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('contentKy').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('contentEn').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('sortOrder').isInt().withMessage(i18n.t('validation.invalid_order')),
-    body('isActive').isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
+    body('key').trim().notEmpty(),
+    body('title').trim().notEmpty(),
+    body('titleKy').optional().trim(),
+    body('titleEn').optional().trim(),
+    body('type').isIn(['TEXT', 'CAROUSEL', 'FEATURES', 'PRICING', 'TESTIMONIALS', 'CTA']),
+    body('content').optional().isString(),
+    body('contentKy').optional().isString(),
+    body('contentEn').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('sortOrder').isInt(),
+    body('isActive').isBoolean(),
   ],
   async (req, res) => {
     try {
@@ -113,7 +112,7 @@ router.post(
       res.status(201).json(block);
     } catch (error) {
       console.error('[CREATE BLOCK ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -124,16 +123,16 @@ router.put(
   authMiddleware,
   requireAdminRole,
   [
-    param('id').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('title').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleKy').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleEn').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('content').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('contentKy').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('contentEn').optional().isString().withMessage(i18n.t('validation.invalid_content')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('sortOrder').optional().isInt().withMessage(i18n.t('validation.invalid_order')),
-    body('isActive').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
+    param('id').isInt(),
+    body('title').optional().trim(),
+    body('titleKy').optional().trim(),
+    body('titleEn').optional().trim(),
+    body('content').optional().isString(),
+    body('contentKy').optional().isString(),
+    body('contentEn').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('sortOrder').optional().isInt(),
+    body('isActive').optional().isBoolean(),
   ],
   async (req, res) => {
     try {
@@ -147,10 +146,10 @@ router.put(
       res.json(block);
     } catch (error) {
       console.error('[UPDATE BLOCK ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -160,7 +159,7 @@ router.delete(
   '/:id',
   authMiddleware,
   requireAdminRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -173,10 +172,10 @@ router.delete(
       res.json({ success: true });
     } catch (error) {
       console.error('[DELETE BLOCK ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -187,16 +186,16 @@ router.post(
   authMiddleware,
   requireAdminRole,
   [
-    body('blockId').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('title').trim().notEmpty().withMessage(i18n.t('validation.name_required')),
-    body('titleKy').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleEn').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('description').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('descriptionKy').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('descriptionEn').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('sortOrder').isInt().withMessage(i18n.t('validation.invalid_order')),
-    body('isActive').isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
+    body('blockId').isInt(),
+    body('title').trim().notEmpty(),
+    body('titleKy').optional().trim(),
+    body('titleEn').optional().trim(),
+    body('description').optional().isString(),
+    body('descriptionKy').optional().isString(),
+    body('descriptionEn').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('sortOrder').isInt(),
+    body('isActive').isBoolean(),
   ],
   async (req, res) => {
     try {
@@ -210,7 +209,7 @@ router.post(
       res.status(201).json(card);
     } catch (error) {
       console.error('[CREATE CARD ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -221,16 +220,16 @@ router.put(
   authMiddleware,
   requireAdminRole,
   [
-    param('id').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('title').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleKy').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('titleEn').optional().trim().withMessage(i18n.t('validation.name_required')),
-    body('description').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('descriptionKy').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('descriptionEn').optional().isString().withMessage(i18n.t('validation.invalid_description')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('sortOrder').optional().isInt().withMessage(i18n.t('validation.invalid_order')),
-    body('isActive').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
+    param('id').isInt(),
+    body('title').optional().trim(),
+    body('titleKy').optional().trim(),
+    body('titleEn').optional().trim(),
+    body('description').optional().isString(),
+    body('descriptionKy').optional().isString(),
+    body('descriptionEn').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('sortOrder').optional().isInt(),
+    body('isActive').optional().isBoolean(),
   ],
   async (req, res) => {
     try {
@@ -244,10 +243,10 @@ router.put(
       res.json(card);
     } catch (error) {
       console.error('[UPDATE CARD ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -257,7 +256,7 @@ router.delete(
   '/cards/:id',
   authMiddleware,
   requireAdminRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -270,10 +269,10 @@ router.delete(
       res.json({ success: true });
     } catch (error) {
       console.error('[DELETE CARD ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -284,15 +283,15 @@ router.post(
   authMiddleware,
   requireAdminRole,
   [
-    body('text').trim().notEmpty().withMessage(i18n.t('validation.required')),
-    body('textKy').optional().trim().withMessage(i18n.t('validation.required')),
-    body('textEn').optional().trim().withMessage(i18n.t('validation.required')),
-    body('author').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('authorKy').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('authorEn').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('isActive').isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('sortOrder').isInt().withMessage(i18n.t('validation.invalid_order')),
+    body('text').trim().notEmpty(),
+    body('textKy').optional().trim(),
+    body('textEn').optional().trim(),
+    body('author').optional().trim(),
+    body('authorKy').optional().trim(),
+    body('authorEn').optional().trim(),
+    body('imageUrl').optional().isURL(),
+    body('isActive').isBoolean(),
+    body('sortOrder').isInt(),
   ],
   async (req, res) => {
     try {
@@ -306,7 +305,7 @@ router.post(
       res.status(201).json(quote);
     } catch (error) {
       console.error('[CREATE QUOTE ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -317,16 +316,16 @@ router.put(
   authMiddleware,
   requireAdminRole,
   [
-    param('id').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('text').optional().trim().withMessage(i18n.t('validation.required')),
-    body('textKy').optional().trim().withMessage(i18n.t('validation.required')),
-    body('textEn').optional().trim().withMessage(i18n.t('validation.required')),
-    body('author').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('authorKy').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('authorEn').optional().trim().withMessage(i18n.t('validation.invalid_author')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('isActive').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('sortOrder').optional().isInt().withMessage(i18n.t('validation.invalid_order')),
+    param('id').isInt(),
+    body('text').optional().trim(),
+    body('textKy').optional().trim(),
+    body('textEn').optional().trim(),
+    body('author').optional().trim(),
+    body('authorKy').optional().trim(),
+    body('authorEn').optional().trim(),
+    body('imageUrl').optional().isURL(),
+    body('isActive').optional().isBoolean(),
+    body('sortOrder').optional().isInt(),
   ],
   async (req, res) => {
     try {
@@ -340,10 +339,10 @@ router.put(
       res.json(quote);
     } catch (error) {
       console.error('[UPDATE QUOTE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -353,7 +352,7 @@ router.delete(
   '/quotes/:id',
   authMiddleware,
   requireAdminRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -366,12 +365,20 @@ router.delete(
       res.json({ success: true });
     } catch (error) {
       console.error('[DELETE QUOTE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+
+

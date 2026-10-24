@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { computerService } from '../services/computer.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -10,11 +9,11 @@ const router = Router();
 router.get(
   '/',
   [
-    check('categoryId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
-    check('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']).withMessage(i18n.t('validation.invalid_status')),
-    check('search').optional().isString().withMessage(i18n.t('validation.invalid_search')),
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
+    check('categoryId').optional().isInt(),
+    check('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']),
+    check('search').optional().isString(),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   async (req, res) => {
     try {
@@ -34,7 +33,7 @@ router.get(
       res.json(computers);
     } catch (error) {
       console.error('[COMPUTERS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -42,7 +41,7 @@ router.get(
 // Получить компьютер по ID
 router.get(
   '/:id',
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -55,10 +54,10 @@ router.get(
       res.json(computer);
     } catch (error) {
       console.error('[COMPUTER ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+      if (error.message === 'Not found') {
+        return res.status(404).json({ error: 'Not found' });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -66,7 +65,7 @@ router.get(
 // Получить компьютер по номеру
 router.get(
   '/number/:number',
-  [param('number').isInt().withMessage(i18n.t('validation.invalid_number'))],
+  [param('number').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -77,13 +76,13 @@ router.get(
       const computer = await computerService.findByNumber(parseInt(req.params.number));
 
       if (!computer) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+        return res.status(404).json({ error: 'Not found' });
       }
 
       res.json(computer);
     } catch (error) {
       console.error('[COMPUTER ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -92,9 +91,9 @@ router.get(
 router.get(
   '/available',
   [
-    check('startsAt').isISO8601().withMessage(i18n.t('validation.invalid_date')),
-    check('endsAt').isISO8601().withMessage(i18n.t('validation.invalid_date')),
-    check('categoryId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
+    check('startsAt').isISO8601(),
+    check('endsAt').isISO8601(),
+    check('categoryId').optional().isInt(),
   ],
   async (req, res) => {
     try {
@@ -114,7 +113,7 @@ router.get(
       res.json({ computers, count: computers.length });
     } catch (error) {
       console.error('[AVAILABLE ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -128,7 +127,7 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -137,9 +136,9 @@ router.get(
 router.get(
   '/recommendations',
   [
-    check('categoryId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
-    check('durationMinutes').optional().isInt().withMessage(i18n.t('validation.invalid_duration')),
-    check('budget').optional().isInt().withMessage(i18n.t('validation.invalid_budget')),
+    check('categoryId').optional().isInt(),
+    check('durationMinutes').optional().isInt(),
+    check('budget').optional().isInt(),
   ],
   async (req, res) => {
     try {
@@ -159,7 +158,7 @@ router.get(
       res.json(recommendations);
     } catch (error) {
       console.error('[RECOMMENDATIONS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -170,12 +169,12 @@ router.post(
   authMiddleware,
   requireManagerRole,
   [
-    body('number').isInt().withMessage(i18n.t('validation.invalid_number')),
-    body('categoryId').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('specifications').optional().isString().withMessage(i18n.t('validation.invalid_specifications')),
-    body('equipment').optional().isString().withMessage(i18n.t('validation.invalid_equipment')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']).withMessage(i18n.t('validation.invalid_status')),
+    body('number').isInt(),
+    body('categoryId').isInt(),
+    body('specifications').optional().isString(),
+    body('equipment').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']),
   ],
   async (req, res) => {
     try {
@@ -189,7 +188,7 @@ router.post(
       res.status(201).json(computer);
     } catch (error) {
       console.error('[CREATE ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -200,12 +199,12 @@ router.put(
   authMiddleware,
   requireManagerRole,
   [
-    param('id').isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('categoryId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('specifications').optional().isString().withMessage(i18n.t('validation.invalid_specifications')),
-    body('equipment').optional().isString().withMessage(i18n.t('validation.invalid_equipment')),
-    body('imageUrl').optional().isURL().withMessage(i18n.t('validation.invalid_url')),
-    body('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']).withMessage(i18n.t('validation.invalid_status')),
+    param('id').isInt(),
+    body('categoryId').optional().isInt(),
+    body('specifications').optional().isString(),
+    body('equipment').optional().isString(),
+    body('imageUrl').optional().isURL(),
+    body('status').optional().isIn(['AVAILABLE', 'IN_USE', 'MAINTENANCE']),
   ],
   async (req, res) => {
     try {
@@ -219,10 +218,10 @@ router.put(
       res.json(computer);
     } catch (error) {
       console.error('[UPDATE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+      if (error.message === 'Not found') {
+        return res.status(404).json({ error: 'Not found' });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -232,7 +231,7 @@ router.patch(
   '/:id/maintenance',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -245,10 +244,10 @@ router.patch(
       res.json(computer);
     } catch (error) {
       console.error('[MAINTENANCE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+      if (error.message === 'Not found') {
+        return res.status(404).json({ error: 'Not found' });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -258,7 +257,7 @@ router.patch(
   '/:id/activate',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -271,10 +270,10 @@ router.patch(
       res.json(computer);
     } catch (error) {
       console.error('[ACTIVATE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+      if (error.message === 'Not found') {
+        return res.status(404).json({ error: 'Not found' });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -284,7 +283,7 @@ router.delete(
   '/:id',
   authMiddleware,
   requireAdminRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -294,15 +293,23 @@ router.delete(
 
       await computerService.archive(parseInt(req.params.id));
 
-      res.json({ message: i18n.t('computers.archived') });
+      res.json({ message: 'Computer archived' });
     } catch (error) {
       console.error('[DELETE ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
-        return res.status(404).json({ error: i18n.t('errors.not_found') });
+      if (error.message === 'Not found') {
+        return res.status(404).json({ error: 'Not found' });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+
+

@@ -75,7 +75,7 @@ export class NotificationService {
     });
 
     if (!notification) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     await prisma.notification.update({
@@ -107,7 +107,7 @@ export class NotificationService {
     });
 
     if (!notification) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     await prisma.notification.delete({
@@ -123,8 +123,8 @@ export class NotificationService {
   async notifyBookingCreated(bookingId: number, userId: number) {
     return this.createNotification(
       userId,
-      i18n.t('notifications.booking_created_title'),
-      i18n.t('notifications.booking_created_message'),
+      i18n('notifications.booking_created_title'),
+      i18n('notifications.booking_created_message'),
       'BOOKING_CONFIRMED',
       `/app/booking/${bookingId}`
     );
@@ -136,8 +136,8 @@ export class NotificationService {
   async notifySessionEnded(bookingId: number, userId: number) {
     return this.createNotification(
       userId,
-      i18n.t('notifications.session_ended_title'),
-      i18n.t('notifications.session_ended_message'),
+      i18n('notifications.session_ended_title'),
+      i18n('notifications.session_ended_message'),
       'SESSION_ENDED',
       `/app/receipts`
     );
@@ -149,8 +149,8 @@ export class NotificationService {
   async notifyPaymentSuccess(paymentId: number, userId: number) {
     return this.createNotification(
       userId,
-      i18n.t('notifications.payment_success_title'),
-      i18n.t('notifications.payment_success_message'),
+      i18n('notifications.payment_success_title'),
+      i18n('notifications.payment_success_message'),
       'PAYMENT_SUCCESS',
       `/app/receipts`
     );
@@ -162,8 +162,8 @@ export class NotificationService {
   async notifyPaymentFailed(paymentId: number, userId: number) {
     return this.createNotification(
       userId,
-      i18n.t('notifications.payment_failed_title'),
-      i18n.t('notifications.payment_failed_message'),
+      i18n('notifications.payment_failed_title'),
+      i18n('notifications.payment_failed_message'),
       'PAYMENT_FAILED',
       `/app/purchases`
     );
@@ -171,3 +171,4 @@ export class NotificationService {
 }
 
 export const notificationService = new NotificationService();
+

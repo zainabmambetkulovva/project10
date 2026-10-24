@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { nanoid } from 'nanoid';
 import { authMiddleware, requireRole } from '../middleware/auth';
 import { config } from '../config/env';
-import { i18n } from '../config/i18n';
 import { PrismaClient } from '@prisma/client';
 
 const router = Router();
@@ -17,11 +16,11 @@ const SALT_ROUNDS = 10;
 router.post(
   '/register',
   [
-    check('firstName').trim().notEmpty().withMessage(i18n.t('validation.name_required')),
-    check('lastName').trim().notEmpty().withMessage(i18n.t('validation.name_required')),
-    check('phone').trim().notEmpty().withMessage(i18n.t('validation.phone_required')),
-    check('email').trim().optional().isEmail().withMessage(i18n.t('validation.email_invalid')),
-    check('password').isLength({ min: 6 }).withMessage(i18n.t('validation.password_min', { length: 6 })),
+    check('firstName').trim().notEmpty(),
+    check('lastName').trim().notEmpty(),
+    check('phone').trim().notEmpty(),
+    check('email').trim().optional().isEmail(),
+    check('password').isLength({ min: 6 }),
   ],
   async (req, res) => {
     try {
@@ -92,11 +91,11 @@ router.post(
       res.status(201).json({
         user,
         token,
-        message: i18n.t('auth.register_success'),
+        message: 'Registration successful',
       });
     } catch (error) {
       console.error('[REGISTER ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -105,8 +104,8 @@ router.post(
 router.post(
   '/login',
   [
-    check('emailOrPhone').trim().notEmpty().withMessage(i18n.t('auth.email_or_phone')),
-    check('password').notEmpty().withMessage(i18n.t('validation.password_required')),
+    check('emailOrPhone').trim().notEmpty(),
+    check('password').notEmpty(),
   ],
   async (req, res) => {
     try {
@@ -125,18 +124,18 @@ router.post(
       });
 
       if (!user) {
-        return res.status(401).json({ error: i18n.t('auth.login_failed') });
+        return res.status(401).json({ error: 'Login failed' });
       }
 
       if (!user.passwordHash) {
-        return res.status(401).json({ error: i18n.t('auth.login_failed') });
+        return res.status(401).json({ error: 'Login failed' });
       }
 
       // Проверяем пароль
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
       if (!isPasswordValid) {
-        return res.status(401).json({ error: i18n.t('auth.login_failed') });
+        return res.status(401).json({ error: 'Login failed' });
       }
 
       // Генерируем токен
@@ -171,11 +170,11 @@ router.post(
           characterId: user.characterId,
         },
         token,
-        message: i18n.t('auth.login_success'),
+        message: 'Login successful',
       });
     } catch (error) {
       console.error('[LOGIN ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -184,9 +183,9 @@ router.post(
 router.post('/logout', authMiddleware, (req, res) => {
   try {
     res.clearCookie('token');
-    res.json({ message: i18n.t('common.logout') });
+    res.json({ message: 'Logged out' });
   } catch (error) {
-    res.status(500).json({ error: i18n.t('errors.internal_error') });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -213,12 +212,12 @@ router.get('/me', authMiddleware, async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: i18n.t('errors.not_found') });
+      return res.status(404).json({ error: 'Not found' });
     }
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: i18n.t('errors.internal_error') });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -232,12 +231,12 @@ router.post('/verify-phone/request', authMiddleware, async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: i18n.t('errors.not_found') });
+      return res.status(404).json({ error: 'Not found' });
     }
 
     // Проверяем, не подтвержден ли телефон уже
     if (user.isPhoneVerified) {
-      return res.status(400).json({ error: i18n.t('auth.phone_already_verified') });
+      return res.status(400).json({ error: 'Phone already verified' });
     }
 
     // Генерируем OTP код
@@ -258,11 +257,11 @@ router.post('/verify-phone/request', authMiddleware, async (req, res) => {
     console.log(`[OTP] Code for ${user.phone}: ${code}`);
 
     res.json({
-      message: i18n.t('auth.code_sent'),
+      message: 'Code sent',
       expiresAt,
     });
   } catch (error) {
-    res.status(500).json({ error: i18n.t('errors.internal_error') });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -277,7 +276,7 @@ router.post('/verify-phone/confirm', authMiddleware, async (req, res) => {
     });
 
     if (!user || !user.phone) {
-      return res.status(404).json({ error: i18n.t('errors.not_found') });
+      return res.status(404).json({ error: 'Not found' });
     }
 
     // Находим активную верификацию
@@ -292,7 +291,7 @@ router.post('/verify-phone/confirm', authMiddleware, async (req, res) => {
     });
 
     if (!verification) {
-      return res.status(400).json({ error: i18n.t('auth.otp_code_invalid') });
+      return res.status(400).json({ error: 'Invalid OTP code' });
     }
 
     // Обновляем пользователя
@@ -310,11 +309,11 @@ router.post('/verify-phone/confirm', authMiddleware, async (req, res) => {
     });
 
     res.json({
-      message: i18n.t('auth.phone_verified'),
+      message: 'Phone verified',
       isPhoneVerified: true,
     });
   } catch (error) {
-    res.status(500).json({ error: i18n.t('errors.internal_error') });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -336,3 +335,10 @@ router.get('/google/callback', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+

@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { param, body, check, validationResult } from 'express-validator';
 import { authMiddleware, requireManagerRole, requireAdminRole } from '../middleware/auth';
 import { paymentService } from '../services/payment.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -11,11 +10,11 @@ router.post(
   '/',
   authMiddleware,
   [
-    body('amount').isInt().withMessage(i18n.t('validation.invalid_amount')),
-    body('bookingId').optional().isInt().withMessage(i18n.t('validation.invalid_id')),
-    body('provider').optional().isIn(['custom', 'e-pay.kg', 'payme', 'zip', 'chipchap']).withMessage(i18n.t('validation.invalid_provider')),
-    body('isIdempotent').optional().isBoolean().withMessage(i18n.t('validation.invalid_boolean')),
-    body('idempotencyKey').optional().isString().withMessage(i18n.t('validation.invalid_key')),
+    body('amount').isInt(),
+    body('bookingId').optional().isInt(),
+    body('provider').optional().isIn(['custom', 'e-pay.kg', 'payme', 'zip', 'chipchap']),
+    body('isIdempotent').optional().isBoolean(),
+    body('idempotencyKey').optional().isString(),
   ],
   async (req, res) => {
     try {
@@ -42,7 +41,7 @@ router.post(
       if (error.message === `Payment provider ${req.body.provider} not configured`) {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -51,7 +50,7 @@ router.post(
 router.get(
   '/:id/verify',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -64,10 +63,10 @@ router.get(
       res.json(result);
     } catch (error) {
       console.error('[VERIFY PAYMENT ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -75,7 +74,7 @@ router.get(
 // Webhook от платежного провайдера
 router.post(
   '/webhook',
-  [body('provider').isIn(['custom', 'e-pay.kg', 'payme', 'zip', 'chipchap']).withMessage(i18n.t('validation.invalid_provider'))],
+  [body('provider').isIn(['custom', 'e-pay.kg', 'payme', 'zip', 'chipchap'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -91,13 +90,13 @@ router.post(
       res.json(payment);
     } catch (error) {
       console.error('[WEBHOOK ERROR]', error);
-      if (error.message === i18n.t('errors.invalid_signature')) {
+      if (error.message === 'Invalid signature') {
         return res.status(401).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.payment_not_found')) {
+      if (error.message === 'Payment not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -107,7 +106,7 @@ router.post(
   '/:id/refund',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id')), body('reason').notEmpty().withMessage(i18n.t('validation.required'))],
+  [param('id').isInt(), body('reason').notEmpty()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -121,16 +120,16 @@ router.post(
       res.json(result);
     } catch (error) {
       console.error('[CREATE REFUND ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.payment_not_completed')) {
+      if (error.message === 'Payment not completed') {
         return res.status(400).json({ error: error.message });
       }
-      if (error.message === i18n.t('errors.no_refundable_amount')) {
+      if (error.message === 'No refundable amount') {
         return res.status(400).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -140,8 +139,8 @@ router.get(
   '/user',
   authMiddleware,
   [
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   async (req, res) => {
     try {
@@ -158,7 +157,7 @@ router.get(
       res.json(payments);
     } catch (error) {
       console.error('[USER PAYMENTS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -168,7 +167,7 @@ router.get(
   '/stats',
   authMiddleware,
   requireManagerRole,
-  [check('period').optional().isIn(['today', 'week', 'month']).withMessage(i18n.t('validation.invalid_period'))],
+  [check('period').optional().isIn(['today', 'week', 'month'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -183,9 +182,17 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[PAYMENT STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+
+
+
+
+
+
+
+

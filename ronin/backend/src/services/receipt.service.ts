@@ -20,7 +20,7 @@ export class ReceiptService {
     });
 
     if (!booking) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     // Проверяем, не создан ли уже чек
@@ -64,7 +64,7 @@ export class ReceiptService {
     });
 
     if (!receipt) {
-      throw new Error(i18n.t('errors.receipt_not_found'));
+      throw new Error(i18n('errors.receipt_not_found'));
     }
 
     return receipt;
@@ -82,7 +82,7 @@ export class ReceiptService {
     });
 
     if (!receipt) {
-      throw new Error(i18n.t('errors.receipt_not_found'));
+      throw new Error(i18n('errors.receipt_not_found'));
     }
 
     // Не возвращаем персональные данные пользователя
@@ -161,7 +161,7 @@ export class ReceiptService {
     });
 
     if (!receipt) {
-      throw new Error(i18n.t('errors.not_found'));
+      throw new Error(i18n('errors.not_found'));
     }
 
     // Проверяем, истек ли срок
@@ -171,7 +171,7 @@ export class ReceiptService {
         data: { status: 'EXPIRED' },
       });
 
-      return { ...receipt, status: 'EXPIRED', message: i18n.t('receipts.expired') };
+      return { ...receipt, status: 'EXPIRED', message: i18n('receipts.expired') };
     }
 
     return receipt;
@@ -210,3 +210,4 @@ export class ReceiptService {
 }
 
 export const receiptService = new ReceiptService();
+

@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { param, check, validationResult } from 'express-validator';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requireManagerRole } from '../middleware/auth';
 import { receiptService } from '../services/receipt.service';
-import { i18n } from '../config/i18n';
 
 const router = Router();
 
@@ -10,7 +9,7 @@ const router = Router();
 router.post(
   '/:bookingId',
   authMiddleware,
-  [param('bookingId').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('bookingId').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -23,10 +22,10 @@ router.post(
       res.status(201).json(receipt);
     } catch (error) {
       console.error('[CREATE RECEIPT ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -35,7 +34,7 @@ router.post(
 router.get(
   '/booking/:bookingId',
   authMiddleware,
-  [param('bookingId').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('bookingId').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -48,10 +47,10 @@ router.get(
       res.json(receipt);
     } catch (error) {
       console.error('[GET RECEIPT BY BOOKING ERROR]', error);
-      if (error.message === i18n.t('errors.receipt_not_found')) {
+      if (error.message === 'Receipt not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -59,7 +58,7 @@ router.get(
 // Получить чек по токену проверки (публичный endpoint)
 router.get(
   '/verify/:token',
-  [param('token').isString().withMessage(i18n.t('validation.invalid_token'))],
+  [param('token').isString()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -72,10 +71,10 @@ router.get(
       res.json(receipt);
     } catch (error) {
       console.error('[VERIFY RECEIPT ERROR]', error);
-      if (error.message === i18n.t('errors.receipt_not_found')) {
+      if (error.message === 'Receipt not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -85,8 +84,8 @@ router.get(
   '/user',
   authMiddleware,
   [
-    check('page').optional().isInt({ min: 1 }).withMessage(i18n.t('validation.invalid_page')),
-    check('limit').optional().isInt({ min: 1, max: 100 }).withMessage(i18n.t('validation.invalid_limit')),
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   async (req, res) => {
     try {
@@ -103,7 +102,7 @@ router.get(
       res.json(receipts);
     } catch (error) {
       console.error('[USER RECEIPTS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -112,7 +111,7 @@ router.get(
 router.get(
   '/:id/status',
   authMiddleware,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -125,10 +124,10 @@ router.get(
       res.json(receipt);
     } catch (error) {
       console.error('[CHECK RECEIPT ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -138,7 +137,7 @@ router.patch(
   '/:id/refund',
   authMiddleware,
   requireManagerRole,
-  [param('id').isInt().withMessage(i18n.t('validation.invalid_id'))],
+  [param('id').isInt()],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -151,10 +150,10 @@ router.patch(
       res.json(receipt);
     } catch (error) {
       console.error('[MARK REFUNDED ERROR]', error);
-      if (error.message === i18n.t('errors.not_found')) {
+      if (error.message === 'Not found') {
         return res.status(404).json({ error: error.message });
       }
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
@@ -164,7 +163,7 @@ router.get(
   '/stats',
   authMiddleware,
   requireManagerRole,
-  [check('period').optional().isIn(['today', 'week', 'month']).withMessage(i18n.t('validation.invalid_period'))],
+  [check('period').optional().isIn(['today', 'week', 'month'])],
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -179,9 +178,10 @@ router.get(
       res.json(stats);
     } catch (error) {
       console.error('[RECEIPT STATS ERROR]', error);
-      res.status(500).json({ error: i18n.t('errors.internal_error') });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );
 
 export default router;
+

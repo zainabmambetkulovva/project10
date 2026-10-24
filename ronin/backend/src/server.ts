@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { config } from './config/env';
-import { i18n } from './config/i18n';
 import routes from './routes';
 
 const app = express();
@@ -23,9 +22,6 @@ app.use(cookieParser(config.sessionSecret));
 if (config.nodeEnv !== 'production') {
   app.use(morgan('dev'));
 }
-
-// i18n
-app.use(i18n.handle);
 
 // Routes
 app.use('/api', routes);

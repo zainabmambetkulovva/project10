@@ -84,7 +84,7 @@ export class AIService {
   async ask(question: string, userId?: number) {
     // Проверяем, включен ли AI
     if (!config.AI_ENABLED || !config.AI_PROVIDER || config.AI_PROVIDER === 'none') {
-      throw new Error(i18n.t('ai.disabled'));
+      throw new Error(i18n('ai.disabled'));
     }
 
     const adapter = this.getAdapter();
@@ -122,8 +122,8 @@ export class AIService {
       tariffs,
       characters,
       cmsBlocks,
-      location: i18n.t('ai.location'),
-      timezone: i18n.t('ai.timezone'),
+      location: i18n('ai.location'),
+      timezone: i18n('ai.timezone'),
     };
   }
 
@@ -140,3 +140,4 @@ export class AIService {
 }
 
 export const aiService = new AIService();
+
